@@ -1,4 +1,5 @@
 import numpy as np
+from numba import jit
 from pyts.approximation import MultipleCoefficientBinning
 from typing import Tuple
 
@@ -101,6 +102,7 @@ def feature_coding(time_series: np.ndarray, num_alphabets: int) -> np.ndarray:
     return feature_coding_matrix
 
 
+@jit(nopython=True)
 def similarity(sequence1: np.ndarray, sequence2: np.ndarray) -> float:
     '''
     This function means the local shape similarity measures between feature coding matrix
@@ -112,9 +114,10 @@ def similarity(sequence1: np.ndarray, sequence2: np.ndarray) -> float:
     Returns:
         float: similarity between two sequences
     '''
-    return np.sum(np.abs(sequence1 - sequence2))
+    return sum(np.abs(sequence1 - sequence2))
 
 
+@jit(nopython=True)
 def distance(
     sequence1: np.ndarray, 
     sequence2: np.ndarray, 
@@ -160,14 +163,15 @@ def distance(
         for j in range(1, n_col):
             distance1 = similarity(feature_coding_matrix1[i], feature_coding_matrix2[j])
             distance2 = (sequence1[i] - sequence2[j]) ** 2
-            min_distance = np.min([distances[i-1][j-1], distances[i-1][j], distances[i][j-1]])
+            min_distance = min([distances[i-1][j-1], distances[i-1][j], distances[i][j-1]])
 
             distances[i][j] = min_distance + (alpha*distance1 + (1-alpha)*distance2)
         
     return distances, distances[n_row-1][n_col-1]
 
 
-def find_path(i: int, j: int, distances: np.array) -> Tuple[tuple]:
+@jit(nopython=True)
+def find_path(i: int, j: int, distances: np.array, epsilon=1e-10) -> Tuple[tuple, float]:
     '''
     This function mean find optimized path on the distances from LSDTW
 
@@ -185,14 +189,14 @@ def find_path(i: int, j: int, distances: np.array) -> Tuple[tuple]:
 
     while (i != 0) or (j != 0):
         if (i > 0 and j > 0):
-            min_distance = np.min([distances[i-1][j], distances[i-1][j-1], distances[i][j-1]])
+            min_distance = min([distances[i-1][j], distances[i-1][j-1], distances[i][j-1]])
 
-            if np.isclose(distances[i-1][j-1], min_distance):
+            if abs(distances[i-1][j-1]-min_distance) < epsilon:
                 i -= 1
                 j -= 1
-            elif np.isclose(distances[i-1][j], min_distance):
+            elif abs(distances[i-1][j]-min_distance) < epsilon:
                 i -= 1
-            elif np.isclose(distances[i][j-1], min_distance):
+            elif abs(distances[i][j-1]-min_distance) < epsilon:
                 j -= 1
 
         elif j > 0:
