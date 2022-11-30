@@ -20,9 +20,10 @@ def filtering(sequence: np.array, window_size: int) -> np.array:
     half_window_size = (window_size-1) // 2
 
     # i < w/2
-    left_values = sequence[:half_window_size]
-    left_counts = np.ones(half_window_size)
-    left_means = left_values.cumsum() / left_counts.cumsum()
+    _left_values = sequence[:window_size-1]
+    _left_counts = np.ones(window_size-1)
+    _left_means = _left_values.cumsum() / _left_counts.cumsum()
+    left_means = _left_means[half_window_size:]
 
     # w/2 < i < n - w/2
     slided_time_series = np.lib.stride_tricks.sliding_window_view(
@@ -30,9 +31,10 @@ def filtering(sequence: np.array, window_size: int) -> np.array:
         )
 
     # n - w/2 < i
-    right_values = sequence[-half_window_size:]
-    right_counts = np.ones(half_window_size)
-    right_means = right_values.cumsum() / right_counts.cumsum()
+    _right_values = sequence[-window_size+1:]
+    _right_counts = np.ones(window_size-1)
+    _right_means = _right_values.cumsum() / _right_counts.cumsum()[::-1]
+    right_means = _right_means[:-half_window_size]
 
     return np.concatenate([left_means, slided_time_series.mean(axis=1), right_means])
 
