@@ -48,10 +48,10 @@ def lsdtw(
     feature_coding_matrix_2 = feature_coding(local_slope_features2, num_alphabets)
 
     feature_coding_matrix_converted_into_num_1 = convert_feature_into_num(
-        feature_coding_matrix_1.reshape(-1)).reshape(sequence1.shape[0], -1
+        feature_coding_matrix_1.reshape(-1)).reshape(-1, num_neighbors-1
         )
     feature_coding_matrix_converted_into_num_2 = convert_feature_into_num(
-        feature_coding_matrix_2.reshape(-1)).reshape(sequence2.shape[0], -1
+        feature_coding_matrix_2.reshape(-1)).reshape(-1, num_neighbors-1
         )
     
     # warping path
